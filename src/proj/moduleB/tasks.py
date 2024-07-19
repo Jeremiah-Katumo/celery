@@ -9,6 +9,8 @@ from celery import states
 from celery.exceptions import Ignore, Reject
 from celery.utils.log import get_task_logger
 from twitter import Twitter
+
+from .database import DatabaseTask
 # from twitter import FailWhaleError   # celery version 4.0
 
 from ..celery import app
@@ -144,3 +146,13 @@ def requeues(self):
         raise Reject('no reason', requeue=True)
     print('received two times')
     
+
+## Per task usage
+# The above can be added to each task like this:
+
+@app.task(base=DatabaseTask, bind=True)
+def process_rows(self: task):
+    for row in self.db.table.all():
+        process_rows(row)
+
+## App-wide usage
