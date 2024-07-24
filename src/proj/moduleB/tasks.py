@@ -9,10 +9,10 @@ from celery import states
 from celery.exceptions import Ignore, Reject
 from celery.utils.log import get_task_logger
 from twitter import Twitter
-
-from .database import DatabaseTask
+from celery import maybe_signature
 # from twitter import FailWhaleError   # celery version 4.0
 
+from .database import DatabaseTask
 from ..celery import app
 
 logger = get_task_logger(__name__)
@@ -159,3 +159,33 @@ def process_rows(self: task):
 
 ## Requests and Custom requests
 
+@app.task
+def reset_buffers(request):
+    pass
+
+@app.task
+def other_task(request):
+    pass
+
+@app.task
+def add(x, y):
+    return x + y
+
+@app.task
+def tsum(numbers):
+    return sum(numbers)
+
+@app.task
+def on_chord_error(request, exc, traceback):
+    print('Task {0!r} raised error: {1!r}'.format(request.id, exc))
+
+
+@app.task(bind=True)
+def unlock_chord(self, group, callback, interval=1, max_retries=None):
+    if group.ready():
+        return maybe_signature(callback).delay(group.join())
+    raise self.retry(countdown=interval, max_retries=max_retries)
+
+@app.task
+def temp():
+    return [tsum(range(10)), tsum(range(100))]
