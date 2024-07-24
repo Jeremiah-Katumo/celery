@@ -90,3 +90,6 @@ tasks.add.chunks(zip(range(100), range(100)), 10).apply_async()
 gr = tasks.add.chunks(zip(range(100), range(100)), 10).group() # convert chunks to group
 gr.skew(start = 1, stop=10)() # and with the group skew the countdown of each task by increments of one:
 tasks.tsum.chunks(range(1000000), 100000).map(sum)
+
+
+### Stamping
