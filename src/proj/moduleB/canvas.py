@@ -1,6 +1,7 @@
 # Canvas: Designing Work-flows
 
 from celery import signature, chain, group, chord
+from uuid import uuid4
 
 from . import tasks
 from ..celery import app
@@ -93,3 +94,37 @@ tasks.tsum.chunks(range(1000000), 100000).map(sum)
 
 
 ### Stamping
+# The goal of the Stamping API is to give an ability to label the signature and its components for debugging information purposes.
+## Custom stamping
+class InGroupVisitor(StampingVisitor):
+    def __init__(self):
+        self.in_group = False
+
+    def on_group_start(self, group, **headers) -> dict:
+        self.in_group = True
+        return {"in_group": [self.in_group], "stamped_headers": ["in_group"]}
+
+    def on_group_end(self, group, **headers) -> None:
+        self.in_group = False
+
+    def on_chain_start(self, chain, **headers) -> dict:
+        return {"in_group": [self.in_group], "stamped_headers": ["in_group"]}
+
+    def on_signature(self, sig, **headers) -> dict:
+        return {"in_group": [self.in_group], "stamped_headers": ["in_group"]}
+    
+
+class MonitoringIdStampingVisitor(StampingVisitor):
+    def on_signature(self, sig, **headers) -> dict:
+        return {'monitoring_id': uuid4().hex}
+    
+## Callbacks stamping
+class CustomStampingVisitor(StampingVisitor):
+    def on_signature(self, sig, **headers) -> dict:
+        return {'header': 'value'}
+
+    def on_callback(self, callback, **header) -> dict:
+        return {'on_callback': True}
+
+    def on_errback(self, errback, **header) -> dict:
+        return {'on_errback': True}
