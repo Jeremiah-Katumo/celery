@@ -140,7 +140,7 @@ def render_Scene(self, path):
         raise self.retry(exc, countdown=10)
 
 # Example re-queuing the message:
-app.task(bind=True, acks_late=True)
+@app.task(bind=True, acks_late=True)
 def requeues(self):
     if not self.request.delivery_info['redelivered']:
         raise Reject('no reason', requeue=True)
@@ -170,6 +170,10 @@ def other_task(request):
 @app.task
 def add(x, y):
     return x + y
+
+@app.task
+def test(arg):
+    print(arg)
 
 @app.task
 def tsum(numbers):
